@@ -1,0 +1,5 @@
+[
+  {"metricType":"CPU","warningThreshold":70.0,"criticalThreshold":90.0,"enabled":true},
+  {"metricType":"RAM","warningThreshold":80.0,"criticalThreshold":95.0,"enabled":true},
+  {"metricType":"DISK","warningThreshold":85.0,"criticalThreshold":95.0,"enabled":true}
+]

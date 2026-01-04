@@ -13,14 +13,43 @@
     
     <!-- Top: Header -->
     <top>
-        <HBox styleClass="header" alignment="CENTER_LEFT" spacing="20">
-            <padding><Insets top="15" right="20" bottom="15" left="20"/></padding>
-            <Label text="🖥️ System Monitoring Dashboard" styleClass="title"/>
-            <Region HBox.hgrow="ALWAYS"/>
-            <Label fx:id="statusLabel" text="Connecting..." styleClass="status"/>
-            <Button text="Refresh" onAction="#onRefresh" styleClass="btn-primary"/>
-            <Button text="Clear Alerts" onAction="#onClearAlerts" styleClass="btn-danger"/>
-        </HBox>
+        <VBox>
+            <!-- Main Header -->
+            <HBox styleClass="header" alignment="CENTER_LEFT" spacing="20">
+                <padding><Insets top="15" right="20" bottom="15" left="20"/></padding>
+                <Label text="System Monitoring Dashboard" styleClass="title"/>
+                <Region HBox.hgrow="ALWAYS"/>
+                <Label fx:id="userLabel" text="Not logged in" styleClass="user-label"/>
+                <Label fx:id="statusLabel" text="Connecting..." styleClass="status"/>
+                <Button fx:id="loginBtn" text="Login" onAction="#onLogin" styleClass="btn-primary"/>
+                <Button text="Refresh" onAction="#onRefresh" styleClass="btn-primary"/>
+            </HBox>
+            
+            <!-- Toolbar -->
+            <HBox styleClass="toolbar" alignment="CENTER_LEFT" spacing="15">
+                <padding><Insets top="10" right="20" bottom="10" left="20"/></padding>
+                
+                <!-- Search -->
+                <Label text="Search:"/>
+                <TextField fx:id="searchField" promptText="Filter agents..." prefWidth="150" onAction="#onSearch"/>
+                <Button text="Search" onAction="#onSearch" styleClass="btn-secondary"/>
+                
+                <Separator orientation="VERTICAL"/>
+                
+                <!-- Date Range -->
+                <Label text="From:"/>
+                <DatePicker fx:id="fromDate" prefWidth="130"/>
+                <Label text="To:"/>
+                <DatePicker fx:id="toDate" prefWidth="130"/>
+                <Button text="Apply" onAction="#onApplyDateFilter" styleClass="btn-secondary"/>
+                
+                <Region HBox.hgrow="ALWAYS"/>
+                
+                <!-- Export -->
+                <Button text="Export CSV" onAction="#onExportCSV" styleClass="btn-secondary"/>
+                <Button text="Export JSON" onAction="#onExportJSON" styleClass="btn-secondary"/>
+            </HBox>
+        </VBox>
     </top>
     
     <!-- Left: Agents List -->
@@ -29,17 +58,45 @@
             <padding><Insets top="15" right="15" bottom="15" left="15"/></padding>
             <Label text="Active Agents" styleClass="section-title"/>
             <ListView fx:id="agentsList" VBox.vgrow="ALWAYS" onMouseClicked="#onAgentSelected"/>
+            
+            <!-- Alert Config Button -->
+            <Button fx:id="configBtn" text="Configure Alerts" onAction="#onConfigureAlerts" 
+                    styleClass="btn-secondary" maxWidth="Infinity" disable="true"/>
         </VBox>
     </left>
     
-    <!-- Center: Charts -->
+    <!-- Center: Charts and Stats -->
     <center>
         <VBox spacing="10" styleClass="charts-container">
             <padding><Insets top="15" right="15" bottom="15" left="15"/></padding>
             
+            <!-- Statistics Cards -->
+            <HBox spacing="15" styleClass="stats-row">
+                <VBox styleClass="stat-card" HBox.hgrow="ALWAYS">
+                    <Label text="CPU" styleClass="stat-label"/>
+                    <Label fx:id="cpuStatLabel" text="--" styleClass="stat-value"/>
+                    <Label fx:id="cpuTrendLabel" text="--" styleClass="stat-trend"/>
+                </VBox>
+                <VBox styleClass="stat-card" HBox.hgrow="ALWAYS">
+                    <Label text="RAM" styleClass="stat-label"/>
+                    <Label fx:id="ramStatLabel" text="--" styleClass="stat-value"/>
+                    <Label fx:id="ramTrendLabel" text="--" styleClass="stat-trend"/>
+                </VBox>
+                <VBox styleClass="stat-card" HBox.hgrow="ALWAYS">
+                    <Label text="Disk" styleClass="stat-label"/>
+                    <Label fx:id="diskStatLabel" text="--" styleClass="stat-value"/>
+                    <Label fx:id="diskTrendLabel" text="--" styleClass="stat-trend"/>
+                </VBox>
+                <VBox styleClass="stat-card" HBox.hgrow="ALWAYS">
+                    <Label text="Samples" styleClass="stat-label"/>
+                    <Label fx:id="samplesLabel" text="--" styleClass="stat-value"/>
+                    <Label text="in range" styleClass="stat-trend"/>
+                </VBox>
+            </HBox>
+            
             <!-- CPU Chart -->
             <VBox styleClass="chart-card" VBox.vgrow="ALWAYS">
-                <Label text="CPU Usage (%)" styleClass="chart-title"/>
+                <Label text="CPU Usage" styleClass="chart-title"/>
                 <LineChart fx:id="cpuChart" VBox.vgrow="ALWAYS" animated="false" createSymbols="false">
                     <xAxis><CategoryAxis fx:id="cpuXAxis" label="Time"/></xAxis>
                     <yAxis><NumberAxis fx:id="cpuYAxis" label="Usage" lowerBound="0" upperBound="100" autoRanging="false"/></yAxis>
@@ -48,7 +105,7 @@
             
             <!-- RAM Chart -->
             <VBox styleClass="chart-card" VBox.vgrow="ALWAYS">
-                <Label text="RAM Usage (%)" styleClass="chart-title"/>
+                <Label text="RAM Usage" styleClass="chart-title"/>
                 <LineChart fx:id="ramChart" VBox.vgrow="ALWAYS" animated="false" createSymbols="false">
                     <xAxis><CategoryAxis fx:id="ramXAxis" label="Time"/></xAxis>
                     <yAxis><NumberAxis fx:id="ramYAxis" label="Usage" lowerBound="0" upperBound="100" autoRanging="false"/></yAxis>
@@ -57,7 +114,7 @@
             
             <!-- Disk Chart -->
             <VBox styleClass="chart-card" VBox.vgrow="ALWAYS">
-                <Label text="Disk Usage (%)" styleClass="chart-title"/>
+                <Label text="Disk Usage" styleClass="chart-title"/>
                 <LineChart fx:id="diskChart" VBox.vgrow="ALWAYS" animated="false" createSymbols="false">
                     <xAxis><CategoryAxis fx:id="diskXAxis" label="Time"/></xAxis>
                     <yAxis><NumberAxis fx:id="diskYAxis" label="Usage" lowerBound="0" upperBound="100" autoRanging="false"/></yAxis>
@@ -70,7 +127,12 @@
     <bottom>
         <VBox styleClass="alerts-panel" spacing="10" prefHeight="200">
             <padding><Insets top="15" right="15" bottom="15" left="15"/></padding>
-            <Label text="Recent Alerts" styleClass="section-title"/>
+            <HBox alignment="CENTER_LEFT" spacing="15">
+                <Label text="Recent Alerts" styleClass="section-title"/>
+                <Region HBox.hgrow="ALWAYS"/>
+                <ComboBox fx:id="severityFilter" promptText="All Severities" prefWidth="150"/>
+                <Button text="Clear Alerts" onAction="#onClearAlerts" styleClass="btn-danger"/>
+            </HBox>
             <TableView fx:id="alertsTable" VBox.vgrow="ALWAYS">
                 <columns>
                     <TableColumn fx:id="alertTimeCol" text="Time" prefWidth="150"/>

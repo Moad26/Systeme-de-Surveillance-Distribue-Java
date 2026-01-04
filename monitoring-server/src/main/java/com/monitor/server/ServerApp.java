@@ -4,7 +4,10 @@ import com.monitor.rmi.IMonitoringService;
 import com.monitor.server.handler.TcpAlertHandler;
 import com.monitor.server.handler.UdpListener;
 import com.monitor.server.service.MonitoringServiceImpl;
+import com.monitor.server.storage.AlertConfigManager;
 import com.monitor.server.storage.DataManager;
+import com.monitor.server.storage.MetricsPersistence;
+import com.monitor.server.security.UserManager;
 
 import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
@@ -14,7 +17,7 @@ import java.util.concurrent.TimeUnit;
 
 /**
  * Main server application.
- * Starts UDP listener, TCP alert handler, and exports RMI service.
+ * Starts UDP listener, TCP alert handler, persistence, and exports RMI service.
  */
 public class ServerApp {
     
@@ -26,6 +29,7 @@ public class ServerApp {
     
     private UdpListener udpListener;
     private TcpAlertHandler tcpAlertHandler;
+    private MetricsPersistence metricsPersistence;
     private Thread udpThread;
     private Thread tcpThread;
     private ScheduledExecutorService statsScheduler;
@@ -40,6 +44,14 @@ public class ServerApp {
         
         // Initialize DataManager (singleton)
         DataManager dataManager = DataManager.getInstance();
+        
+        // Initialize managers
+        AlertConfigManager.getInstance();
+        UserManager.getInstance();
+        
+        // Start metrics persistence (loads existing data)
+        metricsPersistence = new MetricsPersistence(dataManager);
+        metricsPersistence.start();
         
         // Start UDP listener
         udpListener = new UdpListener(UDP_PORT);
@@ -70,6 +82,13 @@ public class ServerApp {
         
         System.out.println("===========================================");
         System.out.println("   SERVER STARTED SUCCESSFULLY");
+        System.out.println("   Features enabled:");
+        System.out.println("   - Metrics persistence (JSON)");
+        System.out.println("   - Statistics calculation");
+        System.out.println("   - Configurable alerts");
+        System.out.println("   - User authentication");
+        System.out.println("   - Data export (CSV/JSON)");
+        System.out.println("   Default admin: admin / admin123");
         System.out.println("   Waiting for agents...");
         System.out.println("===========================================");
         
@@ -86,6 +105,10 @@ public class ServerApp {
         
         if (tcpAlertHandler != null) {
             tcpAlertHandler.stop();
+        }
+        
+        if (metricsPersistence != null) {
+            metricsPersistence.stop();
         }
         
         if (statsScheduler != null) {

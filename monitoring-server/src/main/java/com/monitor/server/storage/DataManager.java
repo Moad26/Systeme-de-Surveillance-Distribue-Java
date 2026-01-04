@@ -191,4 +191,46 @@ public class DataManager {
         return String.format("Agents: %d, Metrics: %d, Alerts: %d",
             metricsStore.size(), totalMetrics, alertsStore.size());
     }
+    
+    /**
+     * Search agents by name pattern.
+     */
+    public List<String> searchAgents(String query) {
+        if (query == null || query.isEmpty()) {
+            return getActiveAgents();
+        }
+        
+        String lowerQuery = query.toLowerCase();
+        List<String> result = new ArrayList<>();
+        
+        for (String agentId : metricsStore.keySet()) {
+            if (agentId.toLowerCase().contains(lowerQuery)) {
+                result.add(agentId);
+            }
+        }
+        
+        return result;
+    }
+    
+    /**
+     * Get metrics within a date range.
+     */
+    public List<Metric> getMetricsByDateRange(String agentId, long fromTime, long toTime) {
+        List<Metric> allMetrics = getAllMetrics(agentId);
+        
+        return allMetrics.stream()
+            .filter(m -> m.getTimestamp() >= fromTime && m.getTimestamp() <= toTime)
+            .toList();
+    }
+    
+    /**
+     * Get alerts with filters.
+     */
+    public List<Alert> getAlertsByFilter(String agentId, String severity, long fromTime, long toTime) {
+        return alertsStore.stream()
+            .filter(a -> agentId == null || agentId.isEmpty() || a.getAgentId().equals(agentId))
+            .filter(a -> severity == null || severity.isEmpty() || a.getLevel().name().equals(severity))
+            .filter(a -> a.getTimestamp() >= fromTime && a.getTimestamp() <= toTime)
+            .toList();
+    }
 }

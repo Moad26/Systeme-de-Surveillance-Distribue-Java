@@ -11,7 +11,7 @@
     -fx-control-inner-background: #2d2d3d;
     -fx-focus-color: #7c3aed;
     -fx-faint-focus-color: transparent;
-    
+
     /* Custom Colors */
     -primary: #7c3aed;
     -primary-light: #a78bfa;
@@ -44,6 +44,23 @@
     -fx-font-size: 14px;
 }
 
+.user-label {
+    -fx-text-fill: -primary-light;
+    -fx-font-size: 14px;
+    -fx-font-weight: bold;
+}
+
+/* Toolbar */
+.toolbar {
+    -fx-background-color: -surface;
+    -fx-border-color: -border;
+    -fx-border-width: 0 0 1 0;
+}
+
+.toolbar .label {
+    -fx-text-fill: -text-secondary;
+}
+
 /* Buttons */
 .btn-primary {
     -fx-background-color: -primary;
@@ -56,6 +73,20 @@
 
 .btn-primary:hover {
     -fx-background-color: -primary-light;
+}
+
+.btn-secondary {
+    -fx-background-color: -surface-light;
+    -fx-text-fill: -text-primary;
+    -fx-padding: 6 12;
+    -fx-background-radius: 6;
+    -fx-cursor: hand;
+    -fx-border-color: -border;
+    -fx-border-radius: 6;
+}
+
+.btn-secondary:hover {
+    -fx-background-color: -border;
 }
 
 .btn-danger {
@@ -110,6 +141,47 @@
 .list-cell:filled:hover {
     -fx-background-color: -surface-light;
     -fx-background-radius: 4;
+}
+
+/* Statistics Cards */
+.stats-row {
+    -fx-min-height: 80;
+}
+
+.stat-card {
+    -fx-background-color: -surface;
+    -fx-background-radius: 8;
+    -fx-border-color: -border;
+    -fx-border-radius: 8;
+    -fx-padding: 12;
+    -fx-alignment: center;
+}
+
+.stat-label {
+    -fx-text-fill: -text-secondary;
+    -fx-font-size: 12px;
+}
+
+.stat-value {
+    -fx-text-fill: -text-primary;
+    -fx-font-size: 24px;
+    -fx-font-weight: bold;
+}
+
+.stat-trend {
+    -fx-font-size: 11px;
+}
+
+.trend-rising {
+    -fx-text-fill: -danger;
+}
+
+.trend-falling {
+    -fx-text-fill: -success;
+}
+
+.trend-stable {
+    -fx-text-fill: -text-secondary;
 }
 
 /* Charts Container */
@@ -223,19 +295,57 @@
     -fx-padding: 8;
 }
 
-/* Severity Colors */
-.severity-critical {
-    -fx-text-fill: -danger;
-    -fx-font-weight: bold;
+/* ComboBox */
+.combo-box {
+    -fx-background-color: -surface-light;
+    -fx-border-color: -border;
+    -fx-border-radius: 6;
+    -fx-background-radius: 6;
 }
 
-.severity-warning {
-    -fx-text-fill: -warning;
-    -fx-font-weight: bold;
+.combo-box .list-cell {
+    -fx-text-fill: -text-primary;
+    -fx-background-color: transparent;
 }
 
-.severity-info {
-    -fx-text-fill: -info;
+.combo-box-popup .list-view {
+    -fx-background-color: -surface;
+}
+
+/* DatePicker */
+.date-picker {
+    -fx-background-color: -surface-light;
+    -fx-border-color: -border;
+    -fx-border-radius: 6;
+    -fx-background-radius: 6;
+}
+
+.date-picker .text-field {
+    -fx-text-fill: -text-primary;
+    -fx-background-color: transparent;
+}
+
+/* TextField */
+.text-field {
+    -fx-background-color: -surface-light;
+    -fx-text-fill: -text-primary;
+    -fx-border-color: -border;
+    -fx-border-radius: 6;
+    -fx-background-radius: 6;
+    -fx-padding: 6 10;
+}
+
+.text-field:focused {
+    -fx-border-color: -primary;
+}
+
+/* Separator */
+.separator {
+    -fx-background-color: transparent;
+}
+
+.separator .line {
+    -fx-border-color: -border;
 }
 
 /* ScrollBars */
@@ -262,4 +372,24 @@
 .scroll-bar .decrement-arrow {
     -fx-shape: "";
     -fx-padding: 0;
+}
+
+/* Dialog */
+.dialog-pane {
+    -fx-background-color: -surface;
+}
+
+.dialog-pane .header-panel {
+    -fx-background-color: -surface-light;
+}
+
+.dialog-pane .content {
+    -fx-padding: 20;
+}
+
+.dialog-pane .button-bar .button {
+    -fx-background-color: -primary;
+    -fx-text-fill: white;
+    -fx-background-radius: 6;
+    -fx-padding: 8 16;
 }
