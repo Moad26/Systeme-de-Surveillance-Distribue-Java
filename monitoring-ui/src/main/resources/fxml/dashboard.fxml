@@ -1,0 +1,85 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.chart.LineChart?>
+<?import javafx.scene.chart.CategoryAxis?>
+<?import javafx.scene.chart.NumberAxis?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+
+<BorderPane xmlns:fx="http://javafx.com/fxml" 
+            fx:controller="com.monitor.ui.controller.DashboardController"
+            stylesheets="@../css/styles.css">
+    
+    <!-- Top: Header -->
+    <top>
+        <HBox styleClass="header" alignment="CENTER_LEFT" spacing="20">
+            <padding><Insets top="15" right="20" bottom="15" left="20"/></padding>
+            <Label text="🖥️ System Monitoring Dashboard" styleClass="title"/>
+            <Region HBox.hgrow="ALWAYS"/>
+            <Label fx:id="statusLabel" text="Connecting..." styleClass="status"/>
+            <Button text="Refresh" onAction="#onRefresh" styleClass="btn-primary"/>
+            <Button text="Clear Alerts" onAction="#onClearAlerts" styleClass="btn-danger"/>
+        </HBox>
+    </top>
+    
+    <!-- Left: Agents List -->
+    <left>
+        <VBox styleClass="sidebar" spacing="10" prefWidth="220">
+            <padding><Insets top="15" right="15" bottom="15" left="15"/></padding>
+            <Label text="Active Agents" styleClass="section-title"/>
+            <ListView fx:id="agentsList" VBox.vgrow="ALWAYS" onMouseClicked="#onAgentSelected"/>
+        </VBox>
+    </left>
+    
+    <!-- Center: Charts -->
+    <center>
+        <VBox spacing="10" styleClass="charts-container">
+            <padding><Insets top="15" right="15" bottom="15" left="15"/></padding>
+            
+            <!-- CPU Chart -->
+            <VBox styleClass="chart-card" VBox.vgrow="ALWAYS">
+                <Label text="CPU Usage (%)" styleClass="chart-title"/>
+                <LineChart fx:id="cpuChart" VBox.vgrow="ALWAYS" animated="false" createSymbols="false">
+                    <xAxis><CategoryAxis fx:id="cpuXAxis" label="Time"/></xAxis>
+                    <yAxis><NumberAxis fx:id="cpuYAxis" label="Usage" lowerBound="0" upperBound="100" autoRanging="false"/></yAxis>
+                </LineChart>
+            </VBox>
+            
+            <!-- RAM Chart -->
+            <VBox styleClass="chart-card" VBox.vgrow="ALWAYS">
+                <Label text="RAM Usage (%)" styleClass="chart-title"/>
+                <LineChart fx:id="ramChart" VBox.vgrow="ALWAYS" animated="false" createSymbols="false">
+                    <xAxis><CategoryAxis fx:id="ramXAxis" label="Time"/></xAxis>
+                    <yAxis><NumberAxis fx:id="ramYAxis" label="Usage" lowerBound="0" upperBound="100" autoRanging="false"/></yAxis>
+                </LineChart>
+            </VBox>
+            
+            <!-- Disk Chart -->
+            <VBox styleClass="chart-card" VBox.vgrow="ALWAYS">
+                <Label text="Disk Usage (%)" styleClass="chart-title"/>
+                <LineChart fx:id="diskChart" VBox.vgrow="ALWAYS" animated="false" createSymbols="false">
+                    <xAxis><CategoryAxis fx:id="diskXAxis" label="Time"/></xAxis>
+                    <yAxis><NumberAxis fx:id="diskYAxis" label="Usage" lowerBound="0" upperBound="100" autoRanging="false"/></yAxis>
+                </LineChart>
+            </VBox>
+        </VBox>
+    </center>
+    
+    <!-- Bottom: Alerts Table -->
+    <bottom>
+        <VBox styleClass="alerts-panel" spacing="10" prefHeight="200">
+            <padding><Insets top="15" right="15" bottom="15" left="15"/></padding>
+            <Label text="Recent Alerts" styleClass="section-title"/>
+            <TableView fx:id="alertsTable" VBox.vgrow="ALWAYS">
+                <columns>
+                    <TableColumn fx:id="alertTimeCol" text="Time" prefWidth="150"/>
+                    <TableColumn fx:id="alertAgentCol" text="Agent" prefWidth="180"/>
+                    <TableColumn fx:id="alertLevelCol" text="Severity" prefWidth="100"/>
+                    <TableColumn fx:id="alertTypeCol" text="Type" prefWidth="80"/>
+                    <TableColumn fx:id="alertMessageCol" text="Message" prefWidth="400"/>
+                </columns>
+            </TableView>
+        </VBox>
+    </bottom>
+</BorderPane>
