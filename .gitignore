@@ -64,3 +64,6 @@ hs_err_pid*
 
 # Virtual Machine crash logs
 replay_pid*.log
+
+*.json
+*.csv
