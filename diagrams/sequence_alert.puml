@@ -1,0 +1,112 @@
+@startuml sequence_alert_critique
+!theme plain
+skinparam backgroundColor #FEFEFE
+skinparam roundcorner 10
+skinparam sequenceMessageAlign center
+
+title Diagramme de Séquence - Flux d'Alerte Critique
+
+actor "Système OS" as OS
+participant "CpuCollector" as Collector
+participant "AgentApp" as Agent
+participant "TcpClient" as TCP
+participant "TcpAlertHandler" as Handler
+participant "DataManager" as DataMgr
+participant "AlertConfigManager" as ConfigMgr
+database "alert_configs.json" as ConfigFile
+database "alerts.json" as AlertFile
+
+== Phase 1: Collecte et Détection ==
+activate Agent
+Agent -> Collector : collect()
+activate Collector
+Collector -> OS : Récupération\nusage CPU
+activate OS
+OS --> Collector : 92.5%
+deactivate OS
+Collector --> Agent : 92.5
+deactivate Collector
+
+Agent -> Agent : checkAndSendAlerts(\nCPU=92.5, RAM, DISK)
+activate Agent
+
+Agent -> Agent : Vérifier seuil CRITICAL\n(>= 90.0%)
+note right: CPU 92.5% >= 90.0%\nAlerte CRITIQUE détectée!
+
+== Phase 2: Déclenchement de l'Alerte ==
+Agent -> Agent : sendAlert("CPU",\n92.5, CRITICAL)
+
+Agent -> TCP : sendAlert(alert)
+activate TCP
+note right of TCP
+  Alert Object:
+  - agentId: "host-12345"
+  - metricType: "CPU"
+  - level: CRITICAL
+  - message: "CPU usage at 92.5%"
+  - timestamp: 1704567890
+end note
+
+== Phase 3: Transmission TCP ==
+TCP -> Handler : Connexion TCP\nPort 9877
+activate Handler
+TCP -> Handler : Envoi objet sérialisé\n(ObjectOutputStream)
+TCP --> Agent : Confirmé
+deactivate TCP
+deactivate Agent
+
+== Phase 4: Réception Serveur ==
+Handler -> Handler : handleClient(socket)
+activate Handler
+Handler -> Handler : ObjectInputStream.readObject()
+note right: Désérialisation\nde l'objet Alert
+
+== Phase 5: Vérification Configuration ==
+Handler -> ConfigMgr : getConfig("CPU")
+activate ConfigMgr
+ConfigMgr -> ConfigFile : Lecture JSON
+activate ConfigFile
+ConfigFile --> ConfigMgr : {metricType:"CPU",\nwarningThreshold:70.0,\ncriticalThreshold:90.0,\nenabled:true}
+deactivate ConfigFile
+ConfigMgr --> Handler : AlertConfig(CPU, 70.0, 90.0)
+deactivate ConfigMgr
+
+Handler -> Handler : Valider alerte\nselon config
+note right: Config active ?\nSeuil valide ?
+
+== Phase 6: Sauvegarde ==
+Handler -> DataMgr : addAlert(alert)
+activate DataMgr
+DataMgr -> DataMgr : alerts.add(alert)
+DataMgr -> AlertFile : Sauvegarde JSON
+activate AlertFile
+note right of AlertFile
+  Persistance de l'alerte:
+  [{
+    "agentId": "host-12345",
+    "metricType": "CPU",
+    "level": "CRITICAL",
+    "message": "CPU usage at 92.5%",
+    "timestamp": 1704567890
+  }]
+end note
+AlertFile --> DataMgr : OK
+deactivate AlertFile
+DataMgr --> Handler : Alerte sauvegardée
+deactivate DataMgr
+
+Handler -> Handler : Log confirmation
+note right: "[TcpAlertHandler]\nReceived alert: Alert[...]"
+
+deactivate Handler
+deactivate Handler
+deactivate Agent
+
+== Phase 7: Notification Clients (Optionnel) ==
+note over Handler, DataMgr
+  Les clients UI (DashboardController) interrogent
+  périodiquement le MonitoringServiceImpl via RMI
+  pour afficher les nouvelles alertes.
+end note
+
+@enduml

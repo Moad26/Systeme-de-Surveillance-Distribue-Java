@@ -1,0 +1,1229 @@
+\documentclass[12pt,a4paper]{report}
+
+% Packages essentiels
+\usepackage[utf8]{inputenc}
+\usepackage[french]{babel}
+\usepackage[T1]{fontenc}
+\usepackage{geometry}
+\usepackage{graphicx}
+\usepackage{float}
+\usepackage{hyperref}
+\usepackage{listings}
+\usepackage{xcolor}
+\usepackage{fancyhdr}
+\usepackage{titlesec}
+\usepackage{makeidx}
+
+% Configuration des marges
+\geometry{
+    left=2.5cm,
+    right=2.5cm,
+    top=2.5cm,
+    bottom=2.5cm
+}
+
+% Configuration des liens hypertexte
+\hypersetup{
+    colorlinks=true,
+    linkcolor=blue,
+    filecolor=magenta,      
+    urlcolor=cyan,
+    pdftitle={Système de Surveillance Distribué},
+    pdfpagemode=FullScreen,
+}
+
+% Configuration du code source
+\definecolor{codegreen}{rgb}{0,0.6,0}
+\definecolor{codegray}{rgb}{0.5,0.5,0.5}
+\definecolor{codepurple}{rgb}{0.58,0,0.82}
+\definecolor{backcolour}{rgb}{0.95,0.95,0.92}
+
+\lstdefinestyle{mystyle}{
+    backgroundcolor=\color{backcolour},   
+    commentstyle=\color{codegreen},
+    keywordstyle=\color{magenta},
+    numberstyle=\tiny\color{codegray},
+    stringstyle=\color{codepurple},
+    basicstyle=\ttfamily\footnotesize,
+    breakatwhitespace=false,         
+    breaklines=true,                 
+    captionpos=b,                    
+    keepspaces=true,                 
+    numbers=left,                    
+    numbersep=5pt,                  
+    showspaces=false,                
+    showstringspaces=false,
+    showtabs=false,                  
+    tabsize=2
+}
+
+\lstset{style=mystyle}
+
+% En-têtes et pieds de page
+\pagestyle{fancy}
+\fancyhf{}
+\fancyhead[L]{\leftmark}
+\fancyhead[R]{\thepage}
+\renewcommand{\headrulewidth}{0.4pt}
+\renewcommand{\footrulewidth}{0.4pt}
+
+% Métadonnées du document
+\title{Système de Surveillance Distribué}
+\author{[Membres de l'équipes]}
+\date{Année Universitaire 2025-2026}
+
+\begin{document}
+
+%==============================================================================
+% PAGE DE GARDE
+%==============================================================================
+\begin{titlepage}
+    \centering
+    \vspace*{2cm}
+    
+    {\LARGE \textbf{Université [Nom de l'Université]}} \\[0.5cm]
+    {\Large Faculté des Sciences et Technologies} \\[0.3cm]
+    {\large Département Informatique} \\[3cm]
+    
+    \rule{\linewidth}{0.5mm} \\[0.4cm]
+    {\huge \textbf{Système de Surveillance Distribué}} \\[0.2cm]
+    {\Large \textit{Monitoring Temps Réel Multi-Agent}} \\[0.4cm]
+    \rule{\linewidth}{0.5mm} \\[2cm]
+    
+    {\Large \textbf{Projet de Systèmes Distribués}} \\[1.5cm]
+    
+    \begin{minipage}{0.4\textwidth}
+        \begin{flushleft}
+            \large
+            \textit{Réalisé par:} \\
+            Nom Prénom 1 \\
+            Nom Prénom 2 \\
+            Nom Prénom 3
+        \end{flushleft}
+    \end{minipage}
+    ~
+    \begin{minipage}{0.4\textwidth}
+        \begin{flushright}
+            \large
+            \textit{Encadré par:} \\
+            Pr. [Nom Encadrant]
+        \end{flushright}
+    \end{minipage}
+    
+    \vfill
+    
+    {\large Année Universitaire 2025-2026}
+\end{titlepage}
+
+%==============================================================================
+% RÉSUMÉ / ABSTRACT
+%==============================================================================
+\chapter*{Résumé}
+\addcontentsline{toc}{chapter}{Résumé}
+
+Ce projet implémente un système complet de surveillance distribué pour le monitoring en temps réel de parcs informatiques. L'architecture adopte un modèle client-serveur multi-agents utilisant Java RMI pour la communication distante, UDP pour la transmission rapide des métriques système (CPU, RAM, Disque), et TCP pour les alertes critiques garantissant la fiabilité.
+
+Le système est composé de quatre modules Maven distincts : \texttt{monitoring-common} (modèles partagés), \texttt{monitoring-agent} (collecteurs système), \texttt{monitoring-server} (serveur centralisé RMI), et \texttt{monitoring-ui} (interface graphique JavaFX). L'agent utilise le pattern Strategy pour la collecte modulaire des métriques, tandis que l'interface utilisateur implémente le pattern MVC avec JavaFX.
+
+Les fonctionnalités avancées incluent : configuration dynamique des seuils d'alerte, historique et statistiques (moyenne, min, max, écart-type, tendances), système d'authentification avec gestion des rôles (Admin, Opérateur, Lecteur), filtrage et recherche multi-critères, et export de données (CSV/JSON). La persistance des données est assurée via JSON pour faciliter l'interopérabilité.
+
+Ce rapport détaille l'analyse, la conception UML, l'architecture technique, l'implémentation Java et le guide d'utilisation du système.
+
+\tableofcontents
+\listoffigures
+\listoftables
+
+%==============================================================================
+% INTRODUCTION
+%==============================================================================
+\chapter*{Introduction}
+\addcontentsline{toc}{chapter}{Introduction}
+
+Dans le contexte actuel de transformation numérique, la surveillance proactive des infrastructures informatiques est devenue un enjeu stratégique majeur pour garantir la disponibilité, la performance et la sécurité des systèmes d'information. Les pannes système, les pics d'utilisation non anticipés et les défaillances matérielles peuvent entraîner des interruptions de service coûteuses.
+
+Ce projet académique vise à concevoir et implémenter un \textbf{système de surveillance distribué} permettant le monitoring en temps réel de multiples machines (agents) via une architecture client-serveur. Le système collecte automatiquement les métriques vitales (utilisation CPU, RAM, Disque), génère des alertes configurables en cas de dépassement de seuils, et offre une interface de visualisation centralisée avec analyse statistique.
+
+L'architecture repose sur les technologies suivantes : \textbf{Java 21} pour le développement, \textbf{Java RMI} (Remote Method Invocation) pour l'invocation distante de méthodes, \textbf{JavaFX} pour l'interface graphique moderne, et les protocoles \textbf{UDP/TCP} pour la transmission réseau optimisée. Le projet est modulaire (Maven multi-module) facilitant la maintenabilité et l'évolutivité.
+
+Ce rapport s'articule autour de quatre chapitres principaux : l'analyse et la conception (Chapitre 1), l'architecture technique détaillée (Chapitre 2), l'implémentation et les détails techniques (Chapitre 3), et le guide d'utilisation avec démonstrations (Chapitre 4).
+
+%==============================================================================
+% CHAPITRE 1 : ANALYSE ET CONCEPTION
+%==============================================================================
+\chapter{Analyse et Conception}
+
+\section{Contexte et Problématique}
+
+\subsection{Systèmes Distribués}
+Un système distribué est un ensemble d'ordinateurs autonomes interconnectés qui apparaissent à l'utilisateur comme un système unique et cohérent. Les principaux défis incluent : la \textbf{communication réseau} (latence, fiabilité), la \textbf{synchronisation} (concurrence, cohérence), et la \textbf{tolérance aux pannes} (disponibilité, résilience).
+
+Notre système de surveillance est intrinsèquement distribué : multiples agents autonomes (sur différentes machines) communiquent avec un serveur centralisé, tandis que plusieurs clients distants accèdent simultanément aux données via RMI.
+
+\subsection{Problématique du Monitoring}
+Les administrateurs système ont besoin de :
+\begin{itemize}
+    \item \textbf{Visibilité temps réel} : Connaître instantanément l'état des machines
+    \item \textbf{Alertes proactives} : Être notifiés avant les pannes critiques
+    \item \textbf{Historique et tendances} : Analyser les performances sur la durée
+    \item \textbf{Centralisation} : Gérer tous les agents depuis une interface unique
+    \item \textbf{Sécurité} : Contrôler l'accès selon les rôles utilisateurs
+\end{itemize}
+
+\section{Besoins Fonctionnels et Non-Fonctionnels}
+
+\subsection{Besoins Fonctionnels}
+\begin{enumerate}
+    \item \textbf{Collecte automatique} : L'agent doit collecter CPU, RAM, Disque toutes les 5 secondes
+    \item \textbf{Transmission réseau} : Métriques envoyées en UDP, alertes en TCP
+    \item \textbf{Seuils configurables} : Définir des seuils WARNING et CRITICAL par métrique
+    \item \textbf{Génération d'alertes} : Déclenchement automatique lors de dépassement
+    \item \textbf{Persistance JSON} : Sauvegarde métriques et alertes sur disque
+    \item \textbf{Interface graphique} : Tableaux de bord avec graphiques temps réel
+    \item \textbf{Statistiques} : Calcul de moyenne, min, max, écart-type, tendances
+    \item \textbf{Authentification} : Login sécurisé avec gestion de tokens
+    \item \textbf{Gestion utilisateurs} : Rôles (ADMIN, OPERATOR, VIEWER)
+    \item \textbf{Export de données} : Génération de rapports CSV/JSON
+    \item \textbf{Filtrage et recherche} : Recherche agents, filtres par date/sévérité
+\end{enumerate}
+
+\subsection{Besoins Non-Fonctionnels}
+\begin{itemize}
+    \item \textbf{Performance} : Latence < 100ms pour l'affichage des metrics
+    \item \textbf{Scalabilité} : Support de 100+ agents simultanés
+    \item \textbf{Fiabilité} : Disponibilité 99.5\% du serveur
+    \item \textbf{Maintenabilité} : Architecture modulaire (Maven multi-module)
+    \item \textbf{Portabilité} : Compatibilité Windows/Linux/macOS (JVM)
+    \item \textbf{Sécurité} : Authentification obligatoire, hachage mots de passe
+\end{itemize}
+
+\section{Choix d'Architecture}
+
+\subsection{Architecture Client-Serveur}
+Le système adopte une architecture client-serveur classique à trois tiers :
+
+\begin{itemize}
+    \item \textbf{Tier 1 - Agents} : Collecteurs autonomes déployés sur chaque machine surveillée
+    \item \textbf{Tier 2 - Serveur Central} : Récepteur/stockage des données + service RMI
+    \item \textbf{Tier 3 - Clients UI} : Interfaces graphiques de consultation distante
+\end{itemize}
+
+\textbf{Justification} : Cette architecture centralise les données tout en distribuant la collecte, facilitant la gestion et la visualisation unifiée.
+
+\subsection{Architecture MVC (Model-View-Controller)}
+L'interface utilisateur JavaFX implémente le pattern MVC :
+
+\begin{itemize}
+    \item \textbf{Model} : Classes \texttt{Metric}, \texttt{Alert}, \texttt{User}, \texttt{AlertConfig}
+    \item \textbf{View} : Fichiers FXML définissant l'interface graphique
+    \item \textbf{Controller} : \texttt{DashboardController} gérant la logique UI
+\end{itemize}
+
+\textbf{Justification} : Séparation des préoccupations, testabilité, maintenabilité.
+
+\subsection{Pattern Strategy pour les Collecteurs}
+L'interface \texttt{ICollector} définit le contrat de collecte :
+
+\begin{lstlisting}[language=Java]
+public interface ICollector {
+    double collect();
+    String getName();
+}
+\end{lstlisting}
+
+Les implémentations concrètes (\texttt{CpuCollector}, \texttt{MemoryCollector}, \texttt{DiskCollector}) fournissent les algorithmes spécifiques.
+
+\textbf{Justification} : Extensibilité (ajout facile de nouveaux collecteurs), testabilité (mock facile).
+
+\section{Modèles de Données}
+
+\subsection{Classe Metric}
+\begin{lstlisting}[language=Java]
+public class Metric implements Serializable {
+    private String agentId;
+    private long timestamp;
+    private double cpuUsage;
+    private double ramUsage;
+    private double diskUsage;
+}
+\end{lstlisting}
+
+\subsection{Classe Alert}
+\begin{lstlisting}[language=Java]
+public class Alert implements Serializable {
+    public enum Severity { INFO, WARNING, CRITICAL }
+    
+    private String agentId;
+    private String message;
+    private Severity level;
+    private long timestamp;
+    private String metricType;
+}
+\end{lstlisting}
+
+\subsection{Classe AlertConfig}
+\begin{lstlisting}[language=Java]
+public class AlertConfig implements Serializable {
+    private String metricType;
+    private double warningThreshold;
+    private double criticalThreshold;
+    private boolean enabled;
+}
+\end{lstlisting}
+
+%==============================================================================
+% CHAPITRE 2 : ARCHITECTURE TECHNIQUE
+%==============================================================================
+\chapter{Architecture Technique}
+
+\section{Vue d'Ensemble du Système}
+
+Le système est organisé en 4 modules Maven indépendants mais interconnectés :
+
+\begin{table}[H]
+\centering
+\begin{tabular}{|l|p{10cm}|}
+\hline
+\textbf{Module} & \textbf{Description} \\
+\hline
+monitoring-common & Modèles de données partagés (Metric, Alert, User, AlertConfig) et interface RMI (\texttt{IMonitoringService}) \\
+\hline
+monitoring-agent & Agent autonome avec collecteurs système, senders UDP/TCP, logique de seuils \\
+\hline
+monitoring-server & Serveur central : listeners UDP/TCP, service RMI, gestionnaires de données, statistiques \\
+\hline
+monitoring-ui & Interface graphique JavaFX (MVC) pour la visualisation et la configuration \\
+\hline
+\end{tabular}
+\caption{Modules Maven du projet}
+\end{table}
+
+\section{Diagramme de Classes Global}
+
+Le diagramme de classes ci-dessous illustre les relations entre les composants principaux du système. Il montre comment l'agent utilise les collecteurs et les clients réseau, comment le serveur gère les données avec ses handlers et managers, et comment l'interface UI communique via RMI.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=\textwidth]{diagrams/class_diagram.png}
+    \caption{Diagramme de Classes Global - Architecture complète du système}
+    \label{fig:class_diagram}
+\end{figure}
+
+\textbf{Points clés} :
+\begin{itemize}
+    \item \textbf{AgentApp} agrège les collecteurs \texttt{ICollector} (CPU, Memory, Disk) et utilise \texttt{UdpSender} et \texttt{TcpClient} pour la transmission
+    \item \textbf{MonitoringServiceImpl} implémente \texttt{IMonitoringService} (RMI) et s'appuie sur \texttt{DataManager}, \texttt{StatisticsService}, \texttt{AlertConfigManager}
+    \item \textbf{DashboardController} (UI) accède au serveur via l'interface RMI distante
+\end{itemize}
+
+\section{Diagramme de Séquence : Flux d'Alerte Critique}
+
+Le diagramme de séquence ci-dessous détaille le flux complet d'une alerte critique, depuis la détection d'un CPU élevé jusqu'à la sauvegarde persistante de l'alerte.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=\textwidth]{diagrams/sequence_alert.png}
+    \caption{Diagramme de Séquence - Traitement d'une Alerte Critique}
+    \label{fig:sequence_alert}
+\end{figure}
+
+\textbf{Étapes du flux} :
+\begin{enumerate}
+    \item \textbf{Collecte} : \texttt{CpuCollector} interroge l'OS et retourne 92.5\%
+    \item \textbf{Détection} : \texttt{AgentApp} compare avec le seuil CRITICAL (90\%)
+    \item \textbf{Déclenchement} : Création d'un objet \texttt{Alert} avec sévérité \texttt{CRITICAL}
+    \item \textbf{Transmission TCP} : \texttt{TcpClient} envoie l'alerte sérialisée
+    \item \textbf{Réception} : \texttt{TcpAlertHandler} accepte la connexion et désérialise
+    \item \textbf{Vérification} : \texttt{AlertConfigManager} valide la configuration active
+    \item \textbf{Sauvegarde} : \texttt{DataManager} persiste l'alerte dans \texttt{alerts.json}
+\end{enumerate}
+
+\section{Choix des Protocoles Réseau}
+
+\subsection{UDP pour les Métriques}
+
+\textbf{Protocole UDP (User Datagram Protocol)} : Non-connecté, sans garantie de livraison.
+
+\textbf{Justification pour les métriques} :
+\begin{itemize}
+    \item \textbf{Performance} : Latence minimale (~1ms vs 10-50ms TCP)
+    \item \textbf{Overhead faible} : Pas de handshake, pas de ACK
+    \item \textbf{Acceptable pour métriques} : Une métrique perdue sur 100 n'est pas critique (envoi toutes les 5s, la suivante arrive rapidement)
+    \item \textbf{Scalabilité} : Peut gérer 10,000+ paquets/seconde
+\end{itemize}
+
+\textbf{Implémentation} : \texttt{UdpSender} sérialise les objets \texttt{Metric} et les envoie via \texttt{DatagramSocket}. \texttt{UdpListener} côté serveur reçoit et désérialise.
+
+\subsection{TCP pour les Alertes}
+
+\textbf{Protocole TCP (Transmission Control Protocol)} : Orienté connexion, fiable, avec garantie d'ordre.
+
+\textbf{Justification pour les alertes} :
+\begin{itemize}
+    \item \textbf{Fiabilité} : Garantie de livraison (ACK, retransmission)
+    \item \textbf{Criticité} : Une alerte \texttt{CRITICAL} ne doit jamais être perdue
+    \item \textbf{Ordre} : Les alertes sont traitées dans l'ordre d'envoi
+    \item \textbf{Intégrité} : Checksum automatique, détection d'erreurs
+\end{itemize}
+
+\textbf{Implémentation} : \texttt{TcpClient} établit une connexion \texttt{Socket} et utilise \texttt{ObjectOutputStream}. \texttt{TcpAlertHandler} côté serveur écoute avec \texttt{ServerSocket} et traite chaque connexion dans un thread pool.
+
+\section{Service RMI (Remote Method Invocation)}
+
+\subsection{Interface IMonitoringService}
+
+\begin{lstlisting}[language=Java]
+public interface IMonitoringService extends Remote {
+    List<String> getActiveAgents() throws RemoteException;
+    List<Metric> getMetrics(String agentId, int limit) 
+        throws RemoteException;
+    List<Alert> getAlerts(String agentId) 
+        throws RemoteException;
+    MetricStatistics getStatistics(String agentId, 
+        long fromTime, long toTime) throws RemoteException;
+    String authenticate(String username, String password) 
+        throws RemoteException;
+    // ... autres méthodes
+}
+\end{lstlisting}
+
+\subsection{Implémentation Serveur}
+
+\texttt{MonitoringServiceImpl} étend \texttt{UnicastRemoteObject} et implémente toutes les méthodes de l'interface. Il est enregistré dans le registre RMI :
+
+\begin{lstlisting}[language=Java]
+Registry registry = LocateRegistry.createRegistry(1099);
+IMonitoringService service = new MonitoringServiceImpl();
+registry.rebind("MonitoringService", service);
+\end{lstlisting}
+
+\subsection{Client RMI (DashboardController)}
+
+Le contrôleur UI se connecte au registre et obtient le stub :
+
+\begin{lstlisting}[language=Java]
+Registry registry = LocateRegistry.getRegistry("localhost", 1099);
+monitoringService = (IMonitoringService) 
+    registry.lookup("MonitoringService");
+\end{lstlisting}
+
+\textbf{Avantages RMI} : Transparence réseau (appel de méthode comme si local), sérialisation automatique, gestion des exceptions distantes.
+
+\section{Persistance des Données (JSON)}
+
+Tous les fichiers de données sont stockés dans le répertoire \texttt{data/} au format JSON :
+
+\begin{table}[H]
+\centering
+\begin{tabular}{|l|p{8cm}|}
+\hline
+\textbf{Fichier} & \textbf{Contenu} \\
+\hline
+metrics/\texttt{[agentId]}.json & Liste des métriques pour un agent \\
+\hline
+alerts.json & Liste de toutes les alertes \\
+\hline
+alert\_configs.json & Configurations des seuils d'alerte \\
+\hline
+users.json & Comptes utilisateurs (mots de passe hachés) \\
+\hline
+\end{tabular}
+\caption{Fichiers de persistance JSON}
+\end{table}
+
+\textbf{Justification JSON} : Format lisible, facilement éditable, interopérable avec d'autres systèmes, pas de dépendance à une base de données lourde.
+
+%==============================================================================
+% CHAPITRE 3 : IMPLÉMENTATION
+%==============================================================================
+\chapter{Implémentation}
+
+\section{Technologies et Outils Utilisés}
+
+\begin{itemize}
+    \item \textbf{Langage} : Java 21 (LTS)
+    \item \textbf{Build Tool} : Apache Maven 3.8+
+    \item \textbf{Interface Utilisateur} : JavaFX 21 (framework UI moderne)
+    \item \textbf{Communication Distante} : Java RMI (Remote Method Invocation)
+    \item \textbf{Réseau} : UDP (DatagramSocket), TCP (Socket/ServerSocket)
+    \item \textbf{Concurrence} : \texttt{ScheduledExecutorService}, \texttt{CopyOnWriteArrayList}, \texttt{ConcurrentHashMap}
+    \item \textbf{Sérialisation} : Java \texttt{ObjectOutputStream}/\texttt{ObjectInputStream}
+    \item \textbf{Persistance} : JSON (parsing manuel, pas de bibliothèque tierce)
+\end{itemize}
+
+\section{Module monitoring-agent}
+
+\subsection{Collecte des Métriques Système}
+
+\subsubsection{CpuCollector}
+Utilise \texttt{OperatingSystemMXBean} pour obtenir le CPU système :
+
+\begin{lstlisting}[language=Java]
+OperatingSystemMXBean osBean = 
+    ManagementFactory.getOperatingSystemMXBean();
+double cpuLoad = osBean.getSystemLoadAverage() / 
+    osBean.getAvailableProcessors() * 100;
+\end{lstlisting}
+
+\subsubsection{MemoryCollector}
+Utilise \texttt{Runtime} pour calculer le pourcentage de RAM utilisée :
+
+\begin{lstlisting}[language=Java]
+Runtime runtime = Runtime.getRuntime();
+long used = runtime.totalMemory() - runtime.freeMemory();
+long max = runtime.maxMemory();
+double ramUsage = (used * 100.0) / max;
+\end{lstlisting}
+
+\subsubsection{DiskCollector}
+Utilise \texttt{FileStore} pour obtenir l'usage disque :
+
+\begin{lstlisting}[language=Java]
+FileStore store = Files.getFileStore(Paths.get("/"));
+long total = store.getTotalSpace();
+long usable = store.getUsableSpace();
+double diskUsage = ((total - usable) * 100.0) / total;
+\end{lstlisting}
+
+\subsection{Planification Périodique avec ScheduledExecutorService}
+
+L'agent utilise un \texttt{ScheduledExecutorService} pour exécuter la collecte toutes les 5 secondes :
+
+\begin{lstlisting}[language=Java]
+scheduler.scheduleAtFixedRate(
+    this::collectAndSend,
+    0,  // initial delay
+    5,  // period
+    TimeUnit.SECONDS
+);
+\end{lstlisting}
+
+\textbf{Avantages} : Thread-safe, gestion automatique du pool de threads, annulation propre.
+
+\subsection{Transmission UDP (UdpSender)}
+
+\begin{lstlisting}[language=Java]
+public void sendMetric(Metric metric) throws IOException {
+    ByteArrayOutputStream baos = new ByteArrayOutputStream();
+    ObjectOutputStream oos = new ObjectOutputStream(baos);
+    oos.writeObject(metric);
+    
+    byte[] data = baos.toByteArray();
+    DatagramPacket packet = new DatagramPacket(
+        data, data.length, 
+        InetAddress.getByName(serverHost), serverPort);
+    
+    socket.send(packet);
+}
+\end{lstlisting}
+
+\subsection{Transmission TCP (TcpClient)}
+
+\begin{lstlisting}[language=Java]
+public void sendAlert(Alert alert) {
+    try (Socket socket = new Socket(serverHost, serverPort);
+         ObjectOutputStream oos = 
+             new ObjectOutputStream(socket.getOutputStream())) {
+        
+        oos.writeObject(alert);
+        oos.flush();
+        
+    } catch (IOException e) {
+        System.err.println("Failed to send alert: " + e.getMessage());
+    }
+}
+\end{lstlisting}
+
+\section{Module monitoring-server}
+
+\subsection{Réception UDP (UdpListener)}
+
+\begin{lstlisting}[language=Java]
+public void run() {
+    DatagramSocket socket = new DatagramSocket(port);
+    byte[] buffer = new byte[4096];
+    
+    while (running) {
+        DatagramPacket packet = new DatagramPacket(buffer, buffer.length);
+        socket.receive(packet);
+        
+        ByteArrayInputStream bais = 
+            new ByteArrayInputStream(packet.getData());
+        ObjectInputStream ois = new ObjectInputStream(bais);
+        Metric metric = (Metric) ois.readObject();
+        
+        dataManager.addMetric(metric);
+    }
+}
+\end{lstlisting}
+
+\subsection{Réception TCP (TcpAlertHandler)}
+
+Le handler TCP utilise un thread pool (\texttt{ExecutorService}) pour traiter plusieurs connexions simultanées :
+
+\begin{lstlisting}[language=Java]
+while (running) {
+    Socket clientSocket = serverSocket.accept();
+    clientPool.submit(() -> handleClient(clientSocket));
+}
+
+private void handleClient(Socket socket) {
+    try (ObjectInputStream ois = 
+            new ObjectInputStream(socket.getInputStream())) {
+        Alert alert = (Alert) ois.readObject();
+        dataManager.addAlert(alert);
+    } catch (Exception e) {
+        // Gestion erreur
+    }
+}
+\end{lstlisting}
+
+\subsection{Service RMI (MonitoringServiceImpl)}
+
+\subsubsection{Enregistrement du Service}
+
+\begin{lstlisting}[language=Java]
+public class ServerApp {
+    public static void main(String[] args) throws Exception {
+        // Créer le registre RMI sur le port 1099
+        Registry registry = LocateRegistry.createRegistry(1099);
+        
+        // Instancier et enregistrer le service
+        IMonitoringService service = new MonitoringServiceImpl();
+        registry.rebind("MonitoringService", service);
+        
+        // Démarrer les listeners
+        UdpListener udpListener = new UdpListener(9876);
+        TcpAlertHandler tcpHandler = new TcpAlertHandler(9877);
+        new Thread(udpListener).start();
+        new Thread(tcpHandler).start();
+    }
+}
+\end{lstlisting}
+
+\subsubsection{Méthodes RMI Principales}
+
+\begin{lstlisting}[language=Java]
+@Override
+public List<String> getActiveAgents() throws RemoteException {
+    return dataManager.getActiveAgents();
+}
+
+@Override
+public List<Metric> getMetrics(String agentId, int limit) 
+        throws RemoteException {
+    return dataManager.getMetrics(agentId).stream()
+        .limit(limit)
+        .collect(Collectors.toList());
+}
+
+@Override
+public MetricStatistics getStatistics(String agentId, 
+        long fromTime, long toTime) throws RemoteException {
+    return statisticsService.calculateStatistics(
+        agentId, fromTime, toTime);
+}
+\end{lstlisting}
+
+\subsection{Calcul de Statistiques (StatisticsService)}
+
+\begin{lstlisting}[language=Java]
+public MetricStatistics calculateStatistics(
+        String agentId, long fromTime, long toTime) {
+    List<Metric> metrics = dataManager.getMetricsByDateRange(
+        agentId, fromTime, toTime);
+    
+    // Calcul moyenne, min, max, écart-type
+    double avgCpu = metrics.stream()
+        .mapToDouble(Metric::getCpuUsage).average().orElse(0);
+    double maxRam = metrics.stream()
+        .mapToDouble(Metric::getRamUsage).max().orElse(0);
+    // ... etc
+    
+    return new MetricStatistics(avgCpu, minCpu, maxCpu, 
+        stdDevCpu, trend, /* ... */);
+}
+\end{lstlisting}
+
+\subsection{Gestion des Utilisateurs et Authentification}
+
+\subsubsection{UserManager}
+
+\begin{itemize}
+    \item Stockage des utilisateurs dans \texttt{users.json}
+    \item Hachage des mots de passe (SHA-256)
+    \item Génération de tokens d'authentification (UUID)
+    \item Vérification des rôles (ADMIN, OPERATOR, VIEWER)
+\end{itemize}
+
+\begin{lstlisting}[language=Java]
+public String authenticate(String username, String password) {
+    User user = users.get(username);
+    if (user != null && user.checkPassword(password)) {
+        String token = UUID.randomUUID().toString();
+        activeSessions.put(token, user);
+        return token;
+    }
+    throw new SecurityException("Invalid credentials");
+}
+\end{lstlisting}
+
+\section{Module monitoring-ui}
+
+\subsection{Architecture JavaFX (MVC)}
+
+\begin{itemize}
+    \item \textbf{FXML} : Définition déclarative de l'interface (\texttt{dashboard.fxml})
+    \item \textbf{Controller} : \texttt{DashboardController} gère la logique UI
+    \item \textbf{Model} : Classes du module \texttt{monitoring-common}
+\end{itemize}
+
+\subsection{Connexion RMI dans le Controller}
+
+\begin{lstlisting}[language=Java]
+private void connectToServer() {
+    try {
+        Registry registry = LocateRegistry.getRegistry(
+            SERVER_HOST, 1099);
+        monitoringService = (IMonitoringService) 
+            registry.lookup("MonitoringService");
+        updateStatus("Connecté", true);
+    } catch (Exception e) {
+        updateStatus("Déconnecté", false);
+    }
+}
+\end{lstlisting}
+
+\subsection{Rafraîchissement Périodique (Polling)}
+
+\begin{lstlisting}[language=Java]
+private void startPolling() {
+    Timeline timeline = new Timeline(new KeyFrame(
+        Duration.seconds(2), 
+        event -> refreshData()
+    ));
+    timeline.setCycleCount(Timeline.INDEFINITE);
+    timeline.play();
+}
+
+private void refreshData() {
+    Platform.runLater(() -> {
+        updateAgentsList();
+        updateCharts();
+        updateAlerts();
+        updateStatistics();
+    });
+}
+\end{lstlisting}
+
+\textbf{Note} : \texttt{Platform.runLater()} garantit que les mises à jour UI s'exécutent sur le thread JavaFX.
+
+\subsection{Graphiques Temps Réel (LineChart)}
+
+\begin{lstlisting}[language=Java]
+private void updateCharts() {
+    String selectedAgent = agentsList.getSelectionModel()
+        .getSelectedItem();
+    if (selectedAgent == null) return;
+    
+    List<Metric> metrics = monitoringService.getMetrics(
+        selectedAgent, 50);
+    
+    XYChart.Series<Number, Number> series = new Series<>();
+    for (int i = 0; i < metrics.size(); i++) {
+        series.getData().add(new Data<>(i, 
+            metrics.get(i).getCpuUsage()));
+    }
+    
+    cpuChart.getData().clear();
+    cpuChart.getData().add(series);
+}
+\end{lstlisting}
+
+\subsection{Export de Données}
+
+\begin{lstlisting}[language=Java]
+private void exportData(String format) {
+    String agentId = selectedAgent;
+    long fromTime = getFromTimestamp();
+    long toTime = getToTimestamp();
+    
+    byte[] data;
+    if (format.equals("CSV")) {
+        data = monitoringService.exportMetricsCSV(
+            agentId, fromTime, toTime);
+    } else {
+        data = monitoringService.exportMetricsJSON(
+            agentId, fromTime, toTime);
+    }
+    
+    FileChooser fileChooser = new FileChooser();
+    fileChooser.setInitialFileName(
+        "export_" + agentId + "." + format.toLowerCase());
+    File file = fileChooser.showSaveDialog(stage);
+    
+    if (file != null) {
+        Files.write(file.toPath(), data);
+        showInfo("Export réussi", "Données exportées");
+    }
+}
+\end{lstlisting}
+
+\section{Gestion de la Concurrence}
+
+\subsection{Structures Thread-Safe}
+
+\begin{itemize}
+    \item \textbf{ConcurrentHashMap} : Pour \texttt{DataManager.metrics} (accès concurrent agent/RMI)
+    \item \textbf{CopyOnWriteArrayList} : Pour \texttt{DataManager.alerts} (lectures fréquentes, écritures rares)
+    \item \textbf{ExecutorService} : Thread pool pour \texttt{TcpAlertHandler}
+\end{itemize}
+
+\subsection{Synchronisation}
+
+\begin{lstlisting}[language=Java]
+public synchronized void addMetric(Metric metric) {
+    String agentId = metric.getAgentId();
+    metrics.putIfAbsent(agentId, new CopyOnWriteArrayList<>());
+    metrics.get(agentId).add(metric);
+    
+    // Marquer l'agent comme actif
+    activeAgents.put(agentId, System.currentTimeMillis());
+}
+\end{lstlisting}
+
+%==============================================================================
+% CHAPITRE 4 : GUIDE D'UTILISATION
+%==============================================================================
+\chapter{Guide d'Utilisation}
+
+\section{Prérequis}
+
+\begin{itemize}
+    \item Java JDK 21 ou supérieur
+    \item Apache Maven 3.8 ou supérieur
+    \item 512 Mo de RAM minimum
+    \item 100 Mo d'espace disque
+\end{itemize}
+
+\section{Installation et Compilation}
+
+\subsection{Étape 1 : Cloner le Projet}
+
+\begin{lstlisting}[language=bash]
+$ git clone https://github.com/votre-equipe/system-surveillance.git
+$ cd system-surveillance
+\end{lstlisting}
+
+\subsection{Étape 2 : Compiler avec Maven}
+
+\begin{lstlisting}[language=bash]
+$ mvn clean install
+\end{lstlisting}
+
+Cette commande compile les 4 modules et génère les JARs exécutables dans les répertoires \texttt{target/} :
+
+\begin{itemize}
+    \item \texttt{monitoring-server/target/monitoring-server-1.0-SNAPSHOT.jar}
+    \item \texttt{monitoring-agent/target/monitoring-agent-1.0-SNAPSHOT.jar}
+    \item \texttt{monitoring-ui/target/monitoring-ui-1.0-SNAPSHOT.jar}
+\end{itemize}
+
+\section{Démarrage du Système}
+
+\textbf{IMPORTANT} : Respecter l'ordre de démarrage suivant.
+
+\subsection{Étape 1 : Démarrer le Serveur}
+
+Ouvrir un terminal et exécuter :
+
+\begin{lstlisting}[language=bash]
+$ java -jar monitoring-server/target/monitoring-server-1.0-SNAPSHOT.jar
+\end{lstlisting}
+
+\textbf{Sortie attendue} :
+\begin{verbatim}
+[ServerApp] ===========================================
+[ServerApp]   MONITORING SERVER STARTED
+[ServerApp] ===========================================
+[RMI] Registry created on port 1099
+[RMI] MonitoringService registered
+[UdpListener] Listening on port 9876
+[TcpAlertHandler] Listening on port 9877
+[DataManager] Initialized
+[UserManager] Loaded 3 users
+[AlertConfigManager] Initialized default configurations
+[ServerApp] Server is ready!
+\end{verbatim}
+
+\subsection{Étape 2 : Démarrer un ou Plusieurs Agents}
+
+Ouvrir un nouveau terminal pour chaque agent :
+
+\begin{lstlisting}[language=bash]
+$ java -jar monitoring-agent/target/monitoring-agent-1.0-SNAPSHOT.jar
+\end{lstlisting}
+
+\textbf{Sortie attendue} :
+\begin{verbatim}
+===========================================
+   MONITORING AGENT STARTED
+   Agent ID: hostname-12345
+   Server: localhost
+   UDP Port: 9876
+   TCP Port: 9877
+   Interval: 5s
+===========================================
+[Agent] Collection started...
+[UdpSender] Sent metric: Metric[agent=hostname-12345, 
+    cpu=45.2%, ram=62.8%, disk=75.3%, time=...]
+\end{verbatim}
+
+\subsection{Étape 3 : Démarrer l'Interface Graphique}
+
+Ouvrir un nouveau terminal :
+
+\begin{lstlisting}[language=bash]
+$ java -jar monitoring-ui/target/monitoring-ui-1.0-SNAPSHOT.jar
+\end{lstlisting}
+
+Une fenêtre JavaFX s'ouvre avec l'écran de connexion.
+
+\section{Utilisation de l'Interface}
+
+\subsection{Authentification}
+
+\textbf{Comptes par défaut} :
+\begin{itemize}
+    \item \textbf{Admin} : \texttt{admin} / \texttt{admin123} (rôle ADMIN)
+    \item \textbf{Opérateur} : \texttt{operator} / \texttt{oper123} (rôle OPERATOR)
+    \item \textbf{Lecteur} : \texttt{viewer} / \texttt{view123} (rôle VIEWER)
+\end{itemize}
+
+\begin{figure}[H]
+    \centering
+    \fbox{\textit{[Capture d'écran de la fenêtre de connexion]}}
+    \caption{Écran de connexion}
+    \label{fig:login}
+\end{figure}
+
+\subsection{Tableau de Bord Principal}
+
+Après connexion, l'interface affiche :
+
+\begin{figure}[H]
+    \centering
+    \fbox{\textit{[Capture d'écran du tableau de bord principal]}}
+    \caption{Tableau de bord avec graphiques temps réel}
+    \label{fig:dashboard}
+\end{figure}
+
+\textbf{Composants de l'interface} :
+\begin{enumerate}
+    \item \textbf{Liste des agents} (gauche) : Tous les agents actifs détectés
+    \item \textbf{Graphiques CPU/RAM/Disk} (centre) : Évolution temps réel des métriques
+    \item \textbf{Statistiques} (haut droite) : Moyenne, Min, Max, Tendances
+    \item \textbf{Table des alertes} (bas) : Toutes les alertes avec sévérité, date, message
+    \item \textbf{Filtres} (barre supérieure) : Recherche, filtres par date/sévérité
+\end{enumerate}
+
+\subsection{Sélection d'un Agent}
+
+Cliquer sur un agent dans la liste de gauche pour afficher ses métriques détaillées. Les graphiques se mettent à jour automatiquement.
+
+\subsection{Configuration des Alertes}
+
+\begin{enumerate}
+    \item Cliquer sur le bouton \textbf{"Configurer Alertes"}
+    \item Une fenêtre modale s'ouvre avec les seuils actuels :
+    \begin{itemize}
+        \item CPU : WARNING 70\%, CRITICAL 90\%
+        \item RAM : WARNING 80\%, CRITICAL 95\%
+        \item DISK : WARNING 85\%, CRITICAL 95\%
+    \end{itemize}
+    \item Modifier les valeurs selon vos besoins
+    \item Cliquer sur \textbf{"Sauvegarder"}
+\end{enumerate}
+
+\begin{figure}[H]
+    \centering
+    \fbox{\textit{[Capture d'écran de la fenêtre de configuration des alertes]}}
+    \caption{Configuration des seuils d'alerte}
+    \label{fig:alert_config}
+\end{figure}
+
+\textbf{Note} : Seuls les utilisateurs avec rôle ADMIN peuvent modifier les seuils.
+
+\subsection{Filtrage et Recherche}
+
+\subsubsection{Recherche d'Agents}
+Utiliser la barre de recherche en haut pour filtrer les agents par nom.
+
+\subsubsection{Filtrage par Date}
+Sélectionner une plage de dates avec les DatePickers et cliquer sur \textbf{"Appliquer Filtre"}.
+
+\subsubsection{Filtrage par Sévérité}
+Utiliser le menu déroulant pour filtrer les alertes par niveau (INFO, WARNING, CRITICAL, ou Toutes).
+
+\subsection{Export de Données}
+
+\begin{enumerate}
+    \item Sélectionner un agent
+    \item Définir une plage de dates
+    \item Cliquer sur \textbf{"Exporter CSV"} ou \textbf{"Exporter JSON"}
+    \item Choisir l'emplacement de sauvegarde
+\end{enumerate}
+
+\textbf{Format CSV} :
+\begin{verbatim}
+Timestamp,AgentID,CPU,RAM,Disk
+1704567890,hostname-12345,45.2,62.8,75.3
+1704567895,hostname-12345,47.1,63.2,75.4
+...
+\end{verbatim}
+
+\textbf{Format JSON} :
+\begin{lstlisting}[language=Java]
+[
+  {
+    "agentId": "hostname-12345",
+    "timestamp": 1704567890,
+    "cpuUsage": 45.2,
+    "ramUsage": 62.8,
+    "diskUsage": 75.3
+  },
+  ...
+]
+\end{lstlisting}
+
+\subsection{Gestion des Utilisateurs (Admins uniquement)}
+
+Les administrateurs peuvent accéder au menu \textbf{"Utilisateurs"} pour :
+\begin{itemize}
+    \item Créer de nouveaux comptes
+    \item Supprimer des utilisateurs
+    \item Modifier les rôles
+    \item Changer les mots de passe
+\end{itemize}
+
+\section{Scénarios d'Utilisation}
+
+\subsection{Scénario 1 : Surveillance Temps Réel}
+
+\textbf{Objectif} : Visualiser en temps réel les performances de tous les serveurs.
+
+\textbf{Étapes} :
+\begin{enumerate}
+    \item Démarrer le serveur
+    \item Démarrer un agent sur chaque machine à surveiller
+    \item Se connecter à l'interface UI
+    \item Observer la liste des agents s'actualiser automatiquement
+    \item Sélectionner un agent pour voir ses graphiques
+\end{enumerate}
+
+\subsection{Scénario 2 : Détection d'Anomalie}
+
+\textbf{Contexte} : Un serveur connaît un pic de CPU.
+
+\textbf{Déroulement} :
+\begin{enumerate}
+    \item Le \texttt{CpuCollector} détecte 95\% d'utilisation
+    \item \texttt{AgentApp} compare avec le seuil CRITICAL (90\%)
+    \item Une alerte CRITICAL est envoyée via TCP
+    \item L'alerte apparaît immédiatement dans la table des alertes de l'UI
+    \item L'administrateur peut exporter les logs pour analyse
+\end{enumerate}
+
+\subsection{Scénario 3 : Analyse Historique}
+
+\textbf{Objectif} : Analyser les tendances sur la dernière semaine.
+
+\textbf{Étapes} :
+\begin{enumerate}
+    \item Sélectionner l'agent \texttt{serveur-prod-01}
+    \item Définir la plage de dates : 01/01/2026 - 08/01/2026
+    \item Cliquer sur \textbf{"Appliquer Filtre"}
+    \item Observer les statistiques : CPU moyen 42\%, tendance STABLE
+    \item Exporter en CSV pour analyse Excel
+\end{enumerate}
+
+%==============================================================================
+% CONCLUSION
+%==============================================================================
+\chapter*{Conclusion}
+\addcontentsline{toc}{chapter}{Conclusion}
+
+Ce projet a permis de concevoir et d'implémenter un système complet de surveillance distribué mettant en œuvre les concepts fondamentaux des systèmes distribués : communication réseau (UDP/TCP), invocation de méthodes distantes (RMI), concurrence et synchronisation, persistance de données.
+
+\textbf{Réalisations principales} :
+\begin{itemize}
+    \item Architecture modulaire et extensible (4 modules Maven)
+    \item Collecte automatisée multi-métriques (CPU, RAM, Disk)
+    \item Système d'alertes configurables avec seuils dynamiques
+    \item Interface graphique moderne (JavaFX) avec visualisation temps réel
+    \item Gestion avancée : authentification, rôles, statistiques, exports
+    \item Persistance JSON pour l'interopérabilité
+\end{itemize}
+
+\textbf{Compétences acquises} :
+\begin{itemize}
+    \item Maîtrise de Java RMI pour les architectures client-serveur
+    \item Programmation réseau UDP/TCP avec Java
+    \item Développement d'interfaces graphiques JavaFX (MVC)
+    \item Gestion de la concurrence (ExecutorService, structures thread-safe)
+    \item Patterns de conception (Strategy, Singleton, Observer)
+\end{itemize}
+
+\textbf{Perspectives d'évolution} :
+\begin{itemize}
+    \item \textbf{Scalabilité} : Migration vers une base de données (PostgreSQL, MongoDB)
+    \item \textbf{Sécurité} : Chiffrement des communications (TLS/SSL)
+    \item \textbf{Monitoring avancé} : Métriques réseau, processus, température
+    \item \textbf{Intelligence} : Détection d'anomalies par Machine Learning
+    \item \textbf{Notifications} : Intégration email/SMS pour les alertes critiques
+    \item \textbf{Cloud} : Déploiement Kubernetes pour haute disponibilité
+\end{itemize}
+
+Ce projet démontre la viabilité d'un système de monitoring distribué en Java pur, sans dépendances externes lourdes, tout en offrant des fonctionnalités avancées comparables à des solutions professionnelles.
+
+%==============================================================================
+% BIBLIOGRAPHIE
+%==============================================================================
+\begin{thebibliography}{9}
+
+\bibitem{tanenbaum}
+Andrew S. Tanenbaum, Maarten Van Steen,
+\textit{Distributed Systems: Principles and Paradigms},
+3rd Edition, Pearson, 2017.
+
+\bibitem{oracle_rmi}
+Oracle Corporation,
+\textit{Java RMI Documentation - Remote Method Invocation},
+\url{https://docs.oracle.com/en/java/javase/21/docs/api/java.rmi/java/rmi/package-summary.html}
+
+\bibitem{javafx}
+Oracle Corporation,
+\textit{JavaFX 21 Documentation},
+\url{https://openjfx.io/javadoc/21/}
+
+\bibitem{java_concurrency}
+Brian Goetz et al.,
+\textit{Java Concurrency in Practice},
+Addison-Wesley Professional, 2006.
+
+\bibitem{udp_tcp}
+W. Richard Stevens,
+\textit{TCP/IP Illustrated, Volume 1: The Protocols},
+2nd Edition, Addison-Wesley, 2011.
+
+\bibitem{design_patterns}
+Erich Gamma, Richard Helm, Ralph Johnson, John Vlissides,
+\textit{Design Patterns: Elements of Reusable Object-Oriented Software},
+Addison-Wesley, 1994.
+
+\end{thebibliography}
+
+%==============================================================================
+% ANNEXES
+%==============================================================================
+\appendix
+
+\chapter{Structure du Projet}
+
+\begin{verbatim}
+system-surveillance/
+├── pom.xml
+├── README.md
+├── diagrams/
+│   ├── class_diagram.puml
+│   └── sequence_alert.puml
+├── monitoring-common/
+│   ├── pom.xml
+│   └── src/main/java/com/monitor/model/
+│       ├── Alert.java
+│       ├── AlertConfig.java
+│       ├── Metric.java
+│       ├── MetricStatistics.java
+│       ├── User.java
+│       └── rmi/IMonitoringService.java
+├── monitoring-agent/
+│   ├── pom.xml
+│   └── src/main/java/com/monitor/agent/
+│       ├── AgentApp.java
+│       ├── collectors/
+│       │   ├── ICollector.java
+│       │   ├── CpuCollector.java
+│       │   ├── MemoryCollector.java
+│       │   └── DiskCollector.java
+│       └── net/
+│           ├── UdpSender.java
+│           └── TcpClient.java
+├── monitoring-server/
+│   ├── pom.xml
+│   └── src/main/java/com/monitor/server/
+│       ├── ServerApp.java
+│       ├── handler/
+│       │   ├── UdpListener.java
+│       │   └── TcpAlertHandler.java
+│       ├── service/
+│       │   ├── MonitoringServiceImpl.java
+│       │   └── StatisticsService.java
+│       ├── storage/
+│       │   ├── DataManager.java
+│       │   ├── AlertConfigManager.java
+│       │   └── MetricsPersistence.java
+│       └── security/
+│           └── UserManager.java
+└── monitoring-ui/
+    ├── pom.xml
+    └── src/main/java/com/monitor/ui/
+        ├── ClientApp.java
+        └── controller/
+            └── DashboardController.java
+\end{verbatim}
+
+\chapter{Ports Réseau Utilisés}
+
+\begin{table}[H]
+\centering
+\begin{tabular}{|l|l|l|}
+\hline
+\textbf{Port} & \textbf{Protocole} & \textbf{Utilisation} \\
+\hline
+1099 & TCP & Registre Java RMI \\
+\hline
+9876 & UDP & Réception des métriques \\
+\hline
+9877 & TCP & Réception des alertes \\
+\hline
+\end{tabular}
+\caption{Ports réseau du système}
+\end{table}
+
+\chapter{Configuration par Défaut}
+
+\section{Intervalles de Collecte}
+\begin{itemize}
+    \item Collecte agent : 5 secondes
+    \item Rafraîchissement UI : 2 secondes
+    \item Timeout inactivité agent : 30 secondes
+\end{itemize}
+
+\section{Seuils d'Alerte par Défaut}
+
+\begin{table}[H]
+\centering
+\begin{tabular}{|l|c|c|}
+\hline
+\textbf{Métrique} & \textbf{WARNING} & \textbf{CRITICAL} \\
+\hline
+CPU & 70\% & 90\% \\
+\hline
+RAM & 80\% & 95\% \\
+\hline
+DISK & 85\% & 95\% \\
+\hline
+\end{tabular}
+\caption{Seuils d'alerte par défaut}
+\end{table}
+
+\end{document}

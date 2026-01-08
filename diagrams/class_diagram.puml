@@ -1,0 +1,236 @@
+@startuml class_diagram_global
+!theme plain
+skinparam classAttributeIconSize 0
+skinparam backgroundColor #FEFEFE
+skinparam roundcorner 10
+
+title Diagramme de Classes Global - Système de Surveillance Distribué
+
+package "monitoring-agent" {
+    class AgentApp {
+        - agentId: String
+        - cpuCollector: ICollector
+        - memoryCollector: ICollector
+        - diskCollector: ICollector
+        - udpSender: UdpSender
+        - tcpClient: TcpClient
+        - scheduler: ScheduledExecutorService
+        + start(): void
+        + collectAndSend(): void
+        + checkAndSendAlerts(cpu, ram, disk): void
+        + sendAlert(metricType, value, severity): void
+        + stop(): void
+    }
+    
+    interface ICollector {
+        + collect(): double
+        + getName(): String
+    }
+    
+    class CpuCollector {
+        + collect(): double
+        + getName(): String
+    }
+    
+    class MemoryCollector {
+        + collect(): double
+        + getName(): String
+    }
+    
+    class DiskCollector {
+        + collect(): double
+        + getName(): String
+    }
+    
+    class UdpSender {
+        - serverHost: String
+        - serverPort: int
+        - socket: DatagramSocket
+        + init(): void
+        + sendMetric(metric: Metric): void
+        + close(): void
+    }
+    
+    class TcpClient {
+        - serverHost: String
+        - serverPort: int
+        + sendAlert(alert: Alert): void
+    }
+    
+    ICollector <|.. CpuCollector
+    ICollector <|.. MemoryCollector
+    ICollector <|.. DiskCollector
+    
+    AgentApp --> ICollector : utilise
+    AgentApp --> UdpSender : envoie métriques
+    AgentApp --> TcpClient : envoie alertes
+}
+
+package "monitoring-common" {
+    class Metric {
+        - agentId: String
+        - timestamp: long
+        - cpuUsage: double
+        - ramUsage: double
+        - diskUsage: double
+    }
+    
+    class Alert {
+        - agentId: String
+        - message: String
+        - level: Severity
+        - timestamp: long
+        - metricType: String
+    }
+    
+    enum Severity {
+        INFO
+        WARNING
+        CRITICAL
+    }
+    
+    class AlertConfig {
+        - metricType: String
+        - warningThreshold: double
+        - criticalThreshold: double
+        - enabled: boolean
+    }
+    
+    interface IMonitoringService {
+        + getActiveAgents(): List<String>
+        + getMetrics(agentId, limit): List<Metric>
+        + getAlerts(agentId): List<Alert>
+        + getStatistics(agentId, from, to): MetricStatistics
+        + authenticate(username, password): String
+    }
+    
+    Alert --> Severity
+}
+
+package "monitoring-server" {
+    class ServerApp {
+        + main(args): void
+    }
+    
+    class MonitoringServiceImpl {
+        - dataManager: DataManager
+        - statisticsService: StatisticsService
+        - userManager: UserManager
+        - alertConfigManager: AlertConfigManager
+        + getActiveAgents(): List<String>
+        + getMetrics(agentId, limit): List<Metric>
+        + getAlerts(agentId): List<Alert>
+        + getStatistics(agentId, from, to): MetricStatistics
+        + updateAlertConfig(token, config): void
+    }
+    
+    class TcpAlertHandler {
+        - port: int
+        - dataManager: DataManager
+        - running: boolean
+        - serverSocket: ServerSocket
+        + run(): void
+        + handleClient(socket): void
+        + stop(): void
+    }
+    
+    class UdpListener {
+        - port: int
+        - dataManager: DataManager
+        - running: boolean
+        + run(): void
+        + stop(): void
+    }
+    
+    class DataManager {
+        - metrics: ConcurrentHashMap
+        - alerts: CopyOnWriteArrayList
+        - activeAgents: ConcurrentHashMap
+        + addMetric(metric): void
+        + addAlert(alert): void
+        + getMetrics(agentId): List<Metric>
+        + getAlerts(): List<Alert>
+    }
+    
+    class AlertConfigManager {
+        - configs: List<AlertConfig>
+        + getInstance(): AlertConfigManager
+        + getConfig(metricType): AlertConfig
+        + updateConfig(config): void
+        + getAllConfigs(): List<AlertConfig>
+    }
+    
+    class StatisticsService {
+        - dataManager: DataManager
+        + calculateStatistics(agentId, from, to): MetricStatistics
+    }
+    
+    IMonitoringService <|.. MonitoringServiceImpl
+    MonitoringServiceImpl --> DataManager
+    MonitoringServiceImpl --> AlertConfigManager
+    MonitoringServiceImpl --> StatisticsService
+    TcpAlertHandler --> DataManager
+    TcpAlertHandler --> AlertConfigManager : vérifie seuils
+    UdpListener --> DataManager
+    ServerApp --> MonitoringServiceImpl
+    ServerApp --> TcpAlertHandler
+    ServerApp --> UdpListener
+}
+
+package "monitoring-ui" {
+    class ClientApp {
+        + start(stage): void
+        + main(args): void
+    }
+    
+    class DashboardController {
+        - monitoringService: IMonitoringService
+        - agentsList: ListView
+        - cpuChart: LineChart
+        - ramChart: LineChart
+        - diskChart: LineChart
+        - alertsTable: TableView
+        - currentToken: String
+        + initialize(): void
+        + connectToServer(): void
+        + refreshData(): void
+        + updateCharts(): void
+        + updateAlerts(): void
+        + onConfigureAlerts(): void
+        + exportData(format): void
+    }
+    
+    ClientApp --> DashboardController
+    DashboardController ..> IMonitoringService : utilise RMI
+}
+
+UdpSender ..> Metric : envoie
+TcpClient ..> Alert : envoie
+UdpListener ..> Metric : reçoit
+TcpAlertHandler ..> Alert : reçoit
+MonitoringServiceImpl ..> Metric : gère
+MonitoringServiceImpl ..> Alert : gère
+MonitoringServiceImpl ..> AlertConfig : configure
+DashboardController ..> Metric : affiche
+DashboardController ..> Alert : affiche
+
+note right of AgentApp
+  Point d'entrée de l'agent.
+  Collecte périodiquement les métriques
+  via les collectors et envoie via UDP.
+  Vérifie les seuils et envoie alertes via TCP.
+end note
+
+note right of MonitoringServiceImpl
+  Service RMI exposé aux clients UI.
+  Centralise l'accès aux données,
+  statistiques et configurations.
+end note
+
+note left of DashboardController
+  Contrôleur JavaFX (MVC).
+  Interface principale pour la
+  visualisation temps réel.
+end note
+
+@enduml
